@@ -8,6 +8,8 @@
 require(reshape)
 require(stringr)
 require(dplyr)
+require(tidyr)
+require(ggplot2)
 
 main <- function(){
   
@@ -21,7 +23,7 @@ main <- function(){
   # initialize dataframe with correct column names and add an extra column for worm #
   velocities <- data.frame(wormID=character(), position=double(), measureID=integer(),velocity=double()) 
   
-  # load data
+  # load all data to be plotted
   for (i in 1:length(input_files)){
     # load data
     temp_data <- read.table(input_files[i], sep = '\t', header=TRUE)
@@ -29,18 +31,20 @@ main <- function(){
     # append worm ID to a column
     temp_data$wormID <- rep(i, dim(temp_data)[1])
     
+    # append strain to a column
+    #strain_ID <- str_extract(input_files[i], 'somepattern')
+    #temp_data$strain <- rep(strain_ID, dim(temp_data)[1])
+    
     # munge data from wide to long
     long_temp_data <- wide_to_long_velocity(temp_data)
     
     # append dataframe to general dataframe
     velocities <- rbind(velocities, long_temp_data)
   }
-  # load data
-  #temp_data <- read.table(input_files[1], sep = '\t', header=TRUE, stringsAsFactors = FALSE)
   
-  
-  # append dataframe to general dataframe
-  
+  # plot and save data
+  vel_plot <- plot_avg_vel(velocities)
+  ggsave(filename = output_filename, plot = vel_plot)
 }
 
 wide_to_long_velocity <- function(df){
@@ -70,6 +74,21 @@ wide_to_long_velocity <- function(df){
   long_df <- full_join(df_pos, df_vel)
   
   return(long_df)
+}
+
+plot_avg_vel <- function(df) {
+  plot_object <- ggplot(df, aes(position, velocity)) +
+    geom_smooth() +
+    scale_y_continuous(limits = c(0, 1.2)) +
+    geom_vline(aes(xintercept = c(1, 4))) +
+    geom_text(aes(x,y, label = "TZ-MS"), 
+              data = data.frame(x = 0.9, y = 0.05), size = 3, hjust = 0,
+              vjust = 0, angle = 90) +
+    geom_text(aes(x,y, label = "MS-DS"), 
+              data = data.frame(x = 3.9, y = 0.05), size = 3, hjust = 0, 
+              vjust = 0, angle = 90)
+  
+  return(plot_object)
 }
 
 main()
