@@ -18,22 +18,22 @@ main <- function(){
   output_filename <- args[1]
   input_files <- args[2:length(args)]
   # output_filename <- "test.pdf"
-  # input_files <- c("./data/B6/kymograph/kymograph_1/Results/Velocity_vs_position_forward.txt", "./data/test/kymograph/kymograph_1/Results/Velocity_vs_position_forward.txt")
+  # input_files <- c("./data/B6/kymograph/kymograph_1/Results/Velocity_vs_position_forward.B6", "./data/test/kymograph/kymograph_1/Results/Velocity_vs_position_forward.test")
   
   # initialize dataframe with correct column names and add an extra column for worm #
-  velocities <- data.frame(wormID=character(), position=double(), measureID=integer(),velocity=double()) 
+  velocities <- data.frame(strain=character(), wormID=character(), position=double(), measureID=integer(),velocity=double()) 
   
   # load all data to be plotted
   for (i in 1:length(input_files)){
     # load data
     temp_data <- read.table(input_files[i], sep = '\t', header=TRUE)
     
+    # append strain to a column
+    strain_ID <- str_match(input_files[i], 'Velocity_vs_position_forward\\.(.+)')
+    temp_data$strain <- rep(strain_ID[2], dim(temp_data)[1])
+    
     # append worm ID to a column
     temp_data$wormID <- rep(i, dim(temp_data)[1])
-    
-    # append strain to a column
-    #strain_ID <- str_extract(input_files[i], 'somepattern')
-    #temp_data$strain <- rep(strain_ID, dim(temp_data)[1])
     
     # munge data from wide to long
     long_temp_data <- wide_to_long_velocity(temp_data)
@@ -61,14 +61,14 @@ wide_to_long_velocity <- function(df){
   # remove position column
   df_pos$obstype <- NULL
   # rename columns
-  colnames(df_pos) <- c('wormID', 'position', 'measureID')
+  colnames(df_pos) <- c('strain', 'wormID', 'position', 'measureID')
   
   # get a dataframe that is only velocities
   df_vel <- df[df$obstype == 'velocity',]
   # remove position column
   df_vel$obstype <- NULL
   # rename columns
-  colnames(df_vel) <- c('wormID', 'velocity', 'measureID')
+  colnames(df_vel) <- c('strain', 'wormID', 'velocity', 'measureID')
   
   # join temp_vel & temp_pos
   long_df <- full_join(df_pos, df_vel)
@@ -78,6 +78,7 @@ wide_to_long_velocity <- function(df){
 
 plot_avg_vel <- function(df) {
   plot_object <- ggplot(df, aes(position, velocity)) +
+    #geom_point() +
     geom_smooth() +
     scale_y_continuous(limits = c(0, 1.2)) +
     geom_vline(aes(xintercept = c(1, 4))) +
