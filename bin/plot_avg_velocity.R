@@ -7,15 +7,20 @@
 # import libraries
 require(reshape)
 require(stringr)
+require(plyr)
 require(dplyr)
 require(tidyr)
 require(ggplot2)
-require(plyr)
+require(testit)
 
 main <- function(){
   
   # assign command line arguments
   args <- commandArgs(trailingOnly = TRUE)
+  
+  # check that there are at least 2 command line inputs
+  assert("there should be at least 2 command line inputs, 1) filename to save figure to and 2) at least 1 Velocity_vs_position_forward.txt", length(args) > 1)
+  
   output_filename <- args[1]
   input_files <- args[2:length(args)]
   # output_filename <- "results/test.pdf"
@@ -48,7 +53,17 @@ main <- function(){
   ggsave(filename = output_filename, plot = vel_plot, width = 4, height = 3)
 }
 
+# Function to transform wide data from a Velocity_vs_position_forward file 
+# (from Kymograph Direct program) where each position has a column for velocity 
+# and for position, and make this a wide dataframe with columns: strain, wormID,
+# position, measureID and velocity
 wide_to_long_velocity <- function(df){
+  # check that the input to the function is of type dataframe
+  assert('The input to wide_to_long_velocity() should be a dataframe', typeof(df) == 'list')
+  
+  # check that correct dataframe format (e.g. a Velocity_vs_position_forward file)
+  # was passed into the function
+  assert('one of the input files was not a Velocity_vs_position_forward file', colnames(df)[1] == 'position1' & colnames(df)[2] == 'velocity1' & colnames(df)[3] == 'position2' & colnames(df)[4] == 'velocity2')
   
   # make data long format
   # first make all long
@@ -80,23 +95,25 @@ wide_to_long_velocity <- function(df){
   return(long_df)
 }
 
+# plot mean particle velocity over position for each strain and represent variance as +/- SEM
+# bin into position intervals to make it quicker to plot (average velocity over every 0.20 um)
+# expects a dataframe with the following columns: strain, wormID,
+# position, measureID and velocity (this can be the output of wide_to_long_velocity() function)
 plot_avg_vel <- function(dataframe) {
+  # check that the input to the function is of type dataframe
+  assert('The input to plot_avg_vel() should be a dataframe', typeof(dataframe) == 'list')
+  # check that the correct format of dataframe was passed to the function
+  assert('The input to plot_avg_vel() should be a dataframe with columns: strain, wormID, position, measureID and velocity', colnames(dataframe) == c('strain', 'wormID', 'position', 'measureID', 'velocity'))
   
-  ##plot particle velocity over position
-  ##bin into position intervals to make it quicker to plot (average velocity over every 0.20 um)
-  
-  ##divide time into intervals (e.g. 0.2) to the last position
+  # divide distance  into intervals (e.g. 0.2) to the last position
   cut1 <- cut(dataframe$position, breaks=seq(0, max(dataframe$position), by = 0.2))
   
-  ##converts these to numbers
+  # converts these to numbers & replace position column with the position interval
   dist.interval <- as.numeric(str_extract(cut1, "[1-9]{1}[0-9.]+"))
-  
   dataframe.dint <- dataframe
-  
-  ##replace position column with the position interval
   dataframe.dint$position <- dist.interval
   
-  ##average over each strain for each time period
+  # average over each strain for each time period
   vel.dint.strain <- ddply(dataframe.dint,.(strain,position),summarise,N=length(position),mean.velocity=mean(velocity),sd=sd(velocity), se=sd/sqrt(N))
   
   ##make plot with error bars
