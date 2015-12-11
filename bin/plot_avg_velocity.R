@@ -18,7 +18,7 @@ main <- function(){
   args <- commandArgs(trailingOnly = TRUE)
   output_filename <- args[1]
   input_files <- args[2:length(args)]
-  # output_filename <- "test.pdf"
+  # output_filename <- "results/test.pdf"
   # input_files <- c("./data/B6/kymograph/kymograph_1/Results/Velocity_vs_position_forward.B6", "./data/test/kymograph/kymograph_1/Results/Velocity_vs_position_forward.test")
   
   # initialize dataframe with correct column names and add an extra column for worm #
@@ -45,7 +45,7 @@ main <- function(){
   
   # plot and save data
   vel_plot <- plot_avg_vel(velocities)
-  ggsave(filename = output_filename, plot = vel_plot)
+  ggsave(filename = output_filename, plot = vel_plot, width = 4, height = 3)
 }
 
 wide_to_long_velocity <- function(df){
@@ -80,25 +80,6 @@ wide_to_long_velocity <- function(df){
   return(long_df)
 }
 
-#plot_avg_vel <- function(df) {
-#  # make strain a factor
-#  df$strain <- as.factor(df$strain)
-#  
-#  plot_object <- ggplot(df, aes(x = position, y = velocity, color = df$strain)) +
-#    #geom_point() +
-#    geom_smooth() +
-#    scale_y_continuous(limits = c(0, 1.2)) +
-#    geom_vline(aes(xintercept = c(1, 4))) +
-#    geom_text(aes(x,y, label = "TZ-MS"), 
-#              data = data.frame(x = 0.9, y = 0.05), size = 3, hjust = 0,
-#              vjust = 0, angle = 90) +
-#    geom_text(aes(x,y, label = "MS-DS"), 
-#              data = data.frame(x = 3.9, y = 0.05), size = 3, hjust = 0, 
-#              vjust = 0, angle = 90)
-#  
-#  return(plot_object)
-#}
-
 plot_avg_vel <- function(dataframe) {
   
   ##plot particle velocity over position
@@ -119,12 +100,22 @@ plot_avg_vel <- function(dataframe) {
   vel.dint.strain <- ddply(dataframe.dint,.(strain,position),summarise,N=length(position),mean.velocity=mean(velocity),sd=sd(velocity), se=sd/sqrt(N))
   
   ##make plot with error bars
-  g  <- ggplot(vel.dint.strain, aes(x = position, y = mean.velocity, colour = vel.dint.strain$strain)) + 
-    geom_errorbar(aes(ymin=mean.velocity-se, ymax=mean.velocity+se), width=.1) +
-    geom_line(aes(group = strain)) + geom_point() +
+  g  <- ggplot(vel.dint.strain, aes(x = position, y = mean.velocity, colour = strain)) + 
+    geom_errorbar(aes(ymin = mean.velocity-se, ymax = mean.velocity+se), width = 0.1) +
+    geom_line(aes(group = strain)) + 
+    geom_point() +
     labs(x="Position (um)", y="Velocity (um/us)") +
     scale_y_continuous(limits = c(0, 1.2)) +
-    theme_bw()
+    #theme_bw(legend.title=element_blank())
+    theme(plot.title = element_text(size = 16, vjust=2), ## Make the plot title larger and higher
+          legend.title=element_blank(), ## remove the legend label
+          legend.key=element_rect(fill='white'), ## remove the blocks around the legend items
+          legend.text=element_text(size = 12), ## make the legend text font larger
+          panel.background = element_rect(fill = 'grey96'), ## make the plot background grey
+          axis.text.x=element_text(colour="black", size = 12), ## change the x-axis values font to black and make larger
+          axis.text.y=element_text(colour="black", size = 12), ## change the y-axis values font to black and make larger
+          axis.title.x = element_text(size = 12, vjust = -0.2), ## change the x-axis label font to black, make larger, and move away from axis
+          axis.title.y = element_text(size = 12, vjust = 1.3)) ## change the y-axis label font to black, make larger, and move away from axis
   
   return(g)
 }
