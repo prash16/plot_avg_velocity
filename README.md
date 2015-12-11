@@ -8,7 +8,7 @@ represented as +/- SEM from `Velocity_vs_position_forward.txt` file outputs from
 
 ### Dependencies
 * R version 3.2.2 or higher
-* R packages reshape, stringr, dplyr, tidyr, ggplot2, plyr
+* R packages reshape, stringr, plyr, dplyr, tidyr, ggplot2, testit
 
 ### How to use
 At the terminal type:
