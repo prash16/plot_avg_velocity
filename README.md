@@ -20,11 +20,11 @@ This program can take multiple input files, simply list them, separating each wi
 space. To make this easier for a lot of files, use the Shells find command, for example:
 
 ~~~
-rscript plot_avg_velocity.R  plotname.pdf $(find data -name *Velocity_vs_position_forward*)
+rscript plot_avg_velocity.R  plotname.pdf $(find data -name Velocity_vs_position_forward*)
 ~~~
 
 If data are in two separate folders (e.g., on for each strain) use two find commands:
 
 ~~~
-rscript plot_avg_velocity.R  plotname.pdf $(find data/strain1 -name *Velocity_vs_position_forward*) $(find data/strain2 -name *Velocity_vs_position_forward*)
+rscript plot_avg_velocity.R  plotname.pdf $(find data/strain1 -name Velocity_vs_position_forward*) $(find data/strain2 -name Velocity_vs_position_forward*)
 ~~~
