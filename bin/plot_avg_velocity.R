@@ -21,7 +21,7 @@ main <- function(){
   # check that there are at least 2 command line inputs
   assert("there should be at least 2 command line inputs, 1) filename to save figure to and 2) at least 1 Velocity_vs_position_forward.txt", length(args) > 1)
   
-  output_filename <- args[1]
+  output_prefix <- args[1]
   input_files <- args[2:length(args)]
   # output_filename <- "results/test.pdf"
   # input_files <- c("./data/B6/kymograph/kymograph_1/Results/Velocity_vs_position_forwardB6.txt", "./data/test/kymograph/kymograph_1/Results/Velocity_vs_position_forwardtest.txt")
@@ -49,8 +49,8 @@ main <- function(){
   }
   
   # plot and save data
-  vel_plot <- plot_avg_vel(velocities)
-  ggsave(filename = output_filename, plot = vel_plot, width = 4, height = 3)
+  vel_plot <- plot_avg_vel(velocities, output_prefix)
+  ggsave(filename = paste(output_prefix, '.pdf', sep = ''), plot = vel_plot, width = 4, height = 3)
 }
 
 # Function to transform wide data from a Velocity_vs_position_forward file 
@@ -99,7 +99,7 @@ wide_to_long_velocity <- function(df){
 # bin into position intervals to make it quicker to plot (average velocity over every 0.20 um)
 # expects a dataframe with the following columns: strain, wormID,
 # position, measureID and velocity (this can be the output of wide_to_long_velocity() function)
-plot_avg_vel <- function(dataframe) {
+plot_avg_vel <- function(dataframe, output_prefix) {
   # check that the input to the function is of type dataframe
   assert('The input to plot_avg_vel() should be a dataframe', typeof(dataframe) == 'list')
   # check that the correct format of dataframe was passed to the function
@@ -116,13 +116,19 @@ plot_avg_vel <- function(dataframe) {
   # average over each strain for each time period
   vel.dint.strain <- ddply(dataframe.dint,.(strain,position),summarise,N=length(position),mean.velocity=mean(velocity),sd=sd(velocity), se=sd/sqrt(N))
   
-  ##make plot with error bars
+  # remove rows with NA  
+  vel.dint.strain <- vel.dint.strain[complete.cases(vel.dint.strain), ]
+  
+  # write table to csv
+  write.table(vel.dint.strain, paste(output_prefix, ".csv", sep = ''), sep = ',', quote = FALSE, row.names = FALSE)
+  
+  ##make plot with se for error bars
   g  <- ggplot(vel.dint.strain, aes(x = position, y = mean.velocity, colour = strain)) + 
     geom_errorbar(aes(ymin = mean.velocity-se, ymax = mean.velocity+se), width = 0.1) +
     geom_line(aes(group = strain)) + 
     geom_point() +
     labs(x="Position (um)", y="Velocity (um/us)") +
-    scale_y_continuous(limits = c(0, 1.2)) +
+    scale_y_continuous(limits = c(0, 1.8)) +
     #theme_bw(legend.title=element_blank())
     theme(plot.title = element_text(size = 16, vjust=2), ## Make the plot title larger and higher
           legend.title=element_blank(), ## remove the legend label
