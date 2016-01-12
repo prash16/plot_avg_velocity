@@ -24,7 +24,7 @@ main <- function(){
   output_filename <- args[1]
   input_files <- args[2:length(args)]
   # output_filename <- "results/test.pdf"
-  # input_files <- c("./data/B6/kymograph/kymograph_1/Results/Velocity_vs_position_forward.B6", "./data/test/kymograph/kymograph_1/Results/Velocity_vs_position_forward.test")
+  # input_files <- c("./data/B6/kymograph/kymograph_1/Results/Velocity_vs_position_forwardB6.txt", "./data/test/kymograph/kymograph_1/Results/Velocity_vs_position_forwardtest.txt")
   
   # initialize dataframe with correct column names and add an extra column for worm #
   velocities <- data.frame(strain=character(), wormID=character(), position=double(), measureID=integer(),velocity=double()) 
@@ -35,7 +35,7 @@ main <- function(){
     temp_data <- read.table(input_files[i], sep = '\t', header=TRUE)
     
     # append strain to a column
-    strain_ID <- str_match(input_files[i], 'Velocity_vs_position_forward\\.(.+)')
+    strain_ID <- str_match(input_files[i], 'Velocity_vs_position_forward(.+).txt')
     temp_data$strain <- rep(strain_ID[2], dim(temp_data)[1])
     
     # append worm ID to a column
