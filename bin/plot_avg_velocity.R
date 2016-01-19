@@ -109,7 +109,7 @@ plot_avg_vel <- function(dataframe, output_prefix) {
   cut1 <- cut(dataframe$position, breaks=seq(0, max(dataframe$position), by = 0.2))
   
   # converts these to numbers & replace position column with the position interval
-  dist.interval <- as.numeric(str_extract(cut1, "[0-9]{1}[0-9.]+"))
+  dist.interval <- as.numeric(str_extract(cut1, "[0-9]{1}[.]*[0-9.]*"))
   dataframe.dint <- dataframe
   dataframe.dint$position <- dist.interval
   
