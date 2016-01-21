@@ -85,9 +85,18 @@ wide_to_long_velocity <- function(df){
   df_vel$obstype <- NULL
   # rename columns
   colnames(df_vel) <- c('strain', 'wormID', 'velocity', 'measureID')
+  # reset rawname
+  rownames(df_vel) <- NULL
+  
+  #add velocity data from "df_vel" to "df_pos" dataframe 
+  df_pos$velocity <- df_vel$velocity
+  long_df <- df_pos
+  
   
   # join temp_vel & temp_pos
-  long_df <- full_join(df_pos, df_vel)
+  # long_df <- full_join(df_pos, df_vel)
+  
+  
   
   # remove rows with NAs
   long_df <- long_df[complete.cases(long_df),]
@@ -124,9 +133,9 @@ plot_avg_vel <- function(dataframe, output_prefix) {
   
   ##make plot with se for error bars
   g  <- ggplot(vel.dint.strain, aes(x = position, y = mean.velocity, colour = strain)) + 
-    geom_errorbar(aes(ymin = mean.velocity-se, ymax = mean.velocity+se), width = 0.1) +
+    geom_errorbar(aes(ymin = mean.velocity-se, ymax = mean.velocity+se), width = 0.1, alpha = 0.5) +  #alpha for errorbar
     geom_line(aes(group = strain)) + 
-    geom_point() +
+    geom_point(size = 0.5) +  #make the small point size
     labs(x="Position (um)", y="Velocity (um/us)") +
     scale_y_continuous(limits = c(0, 1.8)) +
     #theme_bw(legend.title=element_blank())
