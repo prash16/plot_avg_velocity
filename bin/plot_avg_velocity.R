@@ -21,10 +21,10 @@ main <- function(){
   # check that there are at least 2 command line inputs
   assert("there should be at least 2 command line inputs, 1) filename to save figure to and 2) at least 1 Velocity_vs_position_forward.txt", length(args) > 1)
   
-  output_filename <- args[1]
+  output_prefix <- args[1]
   input_files <- args[2:length(args)]
   # output_filename <- "results/test.pdf"
-  # input_files <- c("./data/B6/kymograph/kymograph_1/Results/Velocity_vs_position_forward.B6", "./data/test/kymograph/kymograph_1/Results/Velocity_vs_position_forward.test")
+  # input_files <- c("./data/B6/kymograph/kymograph_1/Results/Velocity_vs_position_forwardB6.txt", "./data/test/kymograph/kymograph_1/Results/Velocity_vs_position_forwardtest.txt")
   
   # initialize dataframe with correct column names and add an extra column for worm #
   velocities <- data.frame(strain=character(), wormID=character(), position=double(), measureID=integer(),velocity=double()) 
@@ -35,7 +35,7 @@ main <- function(){
     temp_data <- read.table(input_files[i], sep = '\t', header=TRUE)
     
     # append strain to a column
-    strain_ID <- str_match(input_files[i], 'Velocity_vs_position_forward\\.(.+)')
+    strain_ID <- str_match(input_files[i], 'Velocity_vs_position_forward(.+).txt')
     temp_data$strain <- rep(strain_ID[2], dim(temp_data)[1])
     
     # append worm ID to a column
@@ -49,8 +49,8 @@ main <- function(){
   }
   
   # plot and save data
-  vel_plot <- plot_avg_vel(velocities)
-  ggsave(filename = output_filename, plot = vel_plot, width = 4, height = 3)
+  vel_plot <- plot_avg_vel(velocities, output_prefix)
+  ggsave(filename = paste(output_prefix, '.pdf', sep = ''), plot = vel_plot, width = 4, height = 3)
 }
 
 # Function to transform wide data from a Velocity_vs_position_forward file 
@@ -85,9 +85,18 @@ wide_to_long_velocity <- function(df){
   df_vel$obstype <- NULL
   # rename columns
   colnames(df_vel) <- c('strain', 'wormID', 'velocity', 'measureID')
+  # reset rawname
+  rownames(df_vel) <- NULL
+  
+  #add velocity data from "df_vel" to "df_pos" dataframe 
+  df_pos$velocity <- df_vel$velocity
+  long_df <- df_pos
+  
   
   # join temp_vel & temp_pos
-  long_df <- full_join(df_pos, df_vel)
+  # long_df <- full_join(df_pos, df_vel)
+  
+  
   
   # remove rows with NAs
   long_df <- long_df[complete.cases(long_df),]
@@ -99,7 +108,7 @@ wide_to_long_velocity <- function(df){
 # bin into position intervals to make it quicker to plot (average velocity over every 0.20 um)
 # expects a dataframe with the following columns: strain, wormID,
 # position, measureID and velocity (this can be the output of wide_to_long_velocity() function)
-plot_avg_vel <- function(dataframe) {
+plot_avg_vel <- function(dataframe, output_prefix) {
   # check that the input to the function is of type dataframe
   assert('The input to plot_avg_vel() should be a dataframe', typeof(dataframe) == 'list')
   # check that the correct format of dataframe was passed to the function
@@ -109,20 +118,26 @@ plot_avg_vel <- function(dataframe) {
   cut1 <- cut(dataframe$position, breaks=seq(0, max(dataframe$position), by = 0.2))
   
   # converts these to numbers & replace position column with the position interval
-  dist.interval <- as.numeric(str_extract(cut1, "[1-9]{1}[0-9.]+"))
+  dist.interval <- as.numeric(str_extract(cut1, "[0-9]{1}[.]*[0-9.]*"))
   dataframe.dint <- dataframe
   dataframe.dint$position <- dist.interval
   
   # average over each strain for each time period
   vel.dint.strain <- ddply(dataframe.dint,.(strain,position),summarise,N=length(position),mean.velocity=mean(velocity),sd=sd(velocity), se=sd/sqrt(N))
   
-  ##make plot with error bars
+  # remove rows with NA  
+  vel.dint.strain <- vel.dint.strain[complete.cases(vel.dint.strain), ]
+  
+  # write table to csv
+  write.table(vel.dint.strain, paste(output_prefix, ".csv", sep = ''), sep = ',', quote = FALSE, row.names = FALSE)
+  
+  ##make plot with se for error bars
   g  <- ggplot(vel.dint.strain, aes(x = position, y = mean.velocity, colour = strain)) + 
-    geom_errorbar(aes(ymin = mean.velocity-se, ymax = mean.velocity+se), width = 0.1) +
+    geom_errorbar(aes(ymin = mean.velocity-se, ymax = mean.velocity+se), width = 0.1, alpha = 0.5) +  #alpha for errorbar
     geom_line(aes(group = strain)) + 
-    geom_point() +
+    geom_point(size = 0.5) +  #make the small point size
     labs(x="Position (um)", y="Velocity (um/us)") +
-    scale_y_continuous(limits = c(0, 1.2)) +
+    scale_y_continuous(limits = c(0, 1.8)) +
     #theme_bw(legend.title=element_blank())
     theme(plot.title = element_text(size = 16, vjust=2), ## Make the plot title larger and higher
           legend.title=element_blank(), ## remove the legend label
