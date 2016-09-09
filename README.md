@@ -3,7 +3,7 @@ Tiffany Timbers, Dec 7, 2015
 
 ### Overview
 This program creates a plot of average velocity (ms) versus position (um) with variability
-represented as +/- SEM from `Velocity_vs_position_forward.txt` file outputs from 
+represented as +/- SEM from `Velocity_vs_position_forward.txt` file outputs from
 [Kymograph Direct](https://sites.google.com/site/kymographanalysis/).
 
 ### Dependencies
@@ -12,11 +12,12 @@ represented as +/- SEM from `Velocity_vs_position_forward.txt` file outputs from
 
 ### How to use
 At the terminal type:
+Hello world this is Prash and I am intelligent 
 ~~~
 rscript bin/plot_avg_velocity.R  results/plotname.pdf data/strain_name/kymograph/kymograph_1/Results/Velocity_vs_position_forward.strain_name
 ~~~
 
-This program can take multiple input files, simply list them, separating each with a 
+This program can take multiple input files, simply list them, separating each with a
 space. To make this easier for a lot of files, use the Shells find command, for example:
 
 ~~~
